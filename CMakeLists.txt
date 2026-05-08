@@ -73,7 +73,7 @@ if(NOT "$ENV{SANITIZER}" STREQUAL "memory")
     # renovate: datasource=github-tags depName=openssl/openssl
     set(OPENSSL_VERSION 3.6.2)
     set(OPENSSL_URL
-        https://github.com/openssl/openssl/releases/download/openssl-${OPENSSL_VERSION}/openssl-${OPENSSL_VERSION}.tar.gz)
+        https://github.com/ubersandro/openssl/archive/refs/tags/FSAN-3.6.2.tar.gz)
     set(OPENSSL_INSTALL_DIR ${CMAKE_BINARY_DIR}/openssl-install)
     set(OPENSSL_SRC_DIR ${CMAKE_BINARY_DIR}/openssl/src/openssl_external)
     set(OPENSSL_STATIC_LIB ${OPENSSL_INSTALL_DIR}/lib/libssl.a ${OPENSSL_INSTALL_DIR}/lib/libcrypto.a)
@@ -122,7 +122,8 @@ if(NOT "$ENV{SANITIZER}" STREQUAL "memory")
     )
 
     ExternalProject_Add(openssl_external
-        URL ${OPENSSL_URL}
+        GIT_REPOSITORY https://github.com/ubersandro/openssl.git
+        GIT_TAG FSAN
         PREFIX ${CMAKE_BINARY_DIR}/openssl
         CONFIGURE_COMMAND ${OPENSSL_CONFIGURE_COMMAND}
         INSTALL_COMMAND ${MAKE} install_sw
@@ -519,9 +520,12 @@ if(NOT "$ENV{ARCHITECTURE}" STREQUAL "i386")
         GIT_TAG ${LPM_VERSION}
         GIT_SHALLOW 1
         PREFIX ${CMAKE_BINARY_DIR}/lpm
+        LIST_SEPARATOR |  
         CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LPM_INSTALL_DIR}
             -DCMAKE_BUILD_TYPE=Release
             -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+            "-DCMAKE_C_FLAGS=-Og -fno-omit-frame-pointer -ggdb -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -pthread -fno-common -fno-data-sections -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer"
+            "-DCMAKE_CXX_FLAGS:STRING=-Og -fno-omit-frame-pointer -ggdb -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -pthread -fno-common -fno-data-sections -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -stdlib=libc++"
             # Have LPM fetch+build protobuf v29.3 from source, using the same
             # compiler and stdlib we're compiling with. This is what keeps the
             # libc++ ABI consistent end-to-end (LPM, protobuf, our .pb.cc, our
